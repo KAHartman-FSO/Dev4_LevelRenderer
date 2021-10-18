@@ -77,7 +77,7 @@ class Renderer
 
 	// Uptate Camera Variables
 	GW::INPUT::GInput keyboard_input;
-	float FOV = 60;
+	float FOV = 1.13446;
 	float mouse_posX, mouse_posY;
 
 public:
@@ -229,8 +229,6 @@ public:
 		SceneData.materials[0] = FSLogo_materials[0].attrib;
 		SceneData.materials[1] = FSLogo_materials[1].attrib;
 	
-		
-
 		/***************** GEOMETRY INTIALIZATION ******************/
 		// Grab the device & physical device so we can allocate some stuff
 		VkPhysicalDevice physicalDevice = nullptr;
