@@ -9,6 +9,7 @@
 #define GATEWARE_DISABLE_GRASTERSURFACE // we have another template for this
 #define GATEWARE_DISABLE_GOPENGLSURFACE // we have another template for this
 #define GATEWARE_ENABLE_MATH
+#define GATEWARE_ENABLE_INPUT
 // With what we want & what we don't defined we can include the API
 #include "../Gateware/Gateware.h"
 #include "renderer.h"
@@ -35,7 +36,7 @@ int main()
 				clrAndDepth[0].color.float32[2] += 0.01f; // disable
 			});
 		win.Register(msgs);
-		win.SetWindowName("Keagan Hartman - Lab 4 - Vulkan");
+		win.SetWindowName("Keagan Hartman - Level Renderer - Vulkan");
 #ifndef NDEBUG
 		const char* debugLayers[] = {
 			"VK_LAYER_KHRONOS_validation", // standard validation layer
@@ -54,6 +55,7 @@ int main()
 			{
 				if (+vulkan.StartFrame(2, clrAndDepth))
 				{
+					renderer.UpdateCamera();
 					renderer.Render();
 					vulkan.EndFrame(true);
 				}

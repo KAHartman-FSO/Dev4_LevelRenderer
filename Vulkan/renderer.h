@@ -71,7 +71,115 @@ class Renderer
 	}
 	std::string vertexShaderSource;
 	std::string pixelShaderSource;
+
+	// Uptate Camera Variables
+	GW::INPUT::GInput keyboard_input;
+	float FOV = 60;
+	float mouse_posX, mouse_posY;
+
+
 public:
+	void UpdateCamera()
+	{
+		static auto clock1 = std::chrono::steady_clock::now();
+		auto clock2 = std::chrono::steady_clock::now();
+		std::chrono::duration<float> time_bt_frame = clock2 - clock1;
+		clock1 = clock2;
+
+		GW::MATH::GMATRIXF temp_view_matrix;
+		MatrixMath.IdentityF(temp_view_matrix);
+		MatrixMath.InverseF(view, temp_view_matrix); // Store a copy of the inversed camera_wm
+
+		// Adjust Matrix based on User Input
+		const float camera_speed = 0.3f;
+		const float sensitivity = 0.15f;
+		GW::MATH::GVECTORF translationData;
+		translationData.x = 0;
+		translationData.y = 0;
+		translationData.z = 0;
+		translationData.w = 0;
+
+		// Adjusting Up and Down of Camera
+		float yChange = 0;
+		float temp;
+		keyboard_input.GetState(G_KEY_SPACE, temp); // UP
+		yChange += temp;
+		keyboard_input.GetState(G_KEY_LEFTSHIFT, temp); // DOWN
+		yChange -= temp;
+		yChange = time_bt_frame.count() * yChange * camera_speed;
+
+		// Adjusting Forwards and Back of Camera
+		float zChange = 0;
+		keyboard_input.GetState(G_KEY_W, temp);
+		zChange += temp;
+		keyboard_input.GetState(G_KEY_S, temp);
+		zChange -= temp;
+		zChange = time_bt_frame.count() * zChange * camera_speed;
+
+		// Adjusting Side to Side of Camera
+		float xChange = 0;
+		keyboard_input.GetState(G_KEY_D, temp);
+		xChange += temp;
+		keyboard_input.GetState(G_KEY_A, temp);
+		xChange -= temp;
+		xChange = time_bt_frame.count() * xChange * camera_speed;
+
+		// Rotation!!
+		float m2x, m2y = 0;
+		keyboard_input.GetMousePosition(m2x, m2y);
+		unsigned int height, width;
+
+		//		Up and Down Rotation
+		win.GetClientHeight(height);
+		float total_pitch = FOV * (m2y - mouse_posY) / static_cast<float>(height);
+		MatrixMath.RotateXLocalF(temp_view_matrix, total_pitch * sensitivity, temp_view_matrix);
+
+		//		Left and Right Rotation
+		win.GetClientWidth(width);
+		float total_yaw = FOV * (m2x - mouse_posX) / static_cast<float>(width);
+		MatrixMath.RotateYGlobalF(temp_view_matrix, total_yaw * sensitivity, temp_view_matrix);
+
+		// Store Mouse Position for Next Pass Through
+		keyboard_input.GetMousePosition(mouse_posX, mouse_posY);
+
+#pragma region Arrow Keys Rotation
+		// Rotation Test! -- With Arrow Keys
+		float rotation_speed = 10.0f;
+
+		// Up Down
+		float UD_Rot = 0;
+		keyboard_input.GetState(G_KEY_DOWN, temp);
+		UD_Rot += temp;
+		keyboard_input.GetState(G_KEY_UP, temp);
+		UD_Rot -= temp;
+		UD_Rot = time_bt_frame.count() * UD_Rot * camera_speed;
+		MatrixMath.RotateXLocalF(temp_view_matrix, UD_Rot * rotation_speed, temp_view_matrix);
+
+		// Left Right
+		float LR_Rot = 0;
+		keyboard_input.GetState(G_KEY_RIGHT, temp);
+		LR_Rot += temp;
+		keyboard_input.GetState(G_KEY_LEFT, temp);
+		LR_Rot -= temp;
+		LR_Rot = time_bt_frame.count() * LR_Rot * camera_speed;
+		MatrixMath.RotateYGlobalF(temp_view_matrix, LR_Rot * rotation_speed, temp_view_matrix);
+#pragma endregion
+
+		// Translate x, y, z etc..
+		translationData.y = yChange;
+		MatrixMath.TranslateGlobalF(temp_view_matrix, translationData, temp_view_matrix); // ytranslation
+
+		translationData.x = xChange;
+		translationData.y = 0;
+		translationData.z = zChange;
+		MatrixMath.TranslateLocalF(temp_view_matrix, translationData, temp_view_matrix); // x and z translation	
+
+		// Set camera_vm to newly adjusted, inversed matrix
+		std::cout << "Camera Position: " << temp_view_matrix.row4.x << ", " <<
+			temp_view_matrix.row4.y << ", " << temp_view_matrix.row4.z << std::endl;
+
+		MatrixMath.InverseF(temp_view_matrix, view);
+	}
 	Renderer(GW::SYSTEM::GWindow _win, GW::GRAPHICS::GVulkanSurface _vlk)
 	{
 		// Load Shader Sources
@@ -84,6 +192,7 @@ public:
 		win.GetClientWidth(width);
 		win.GetClientHeight(height);
 	
+		keyboard_input.Create(_win);
 		MatrixMath.Create();
 		// World Matrix
 		MatrixMath.IdentityF(world);
@@ -403,6 +512,7 @@ public:
 		float total_rotation = rotation_speed * time_bt_frame.count();
 		MatrixMath.RotateYGlobalF(world, total_rotation, world);
 		SceneData.world_matrices[1] = world;
+		SceneData.view_matrix = view;
 		for (int i = 0; i < frameCount; i++)
 		{
 			GvkHelper::write_to_buffer(device, storageDatas[i], &SceneData, sizeof(SceneData));
