@@ -1,0 +1,1 @@
+Put GateWare File Folder in same directory path as this text document.
