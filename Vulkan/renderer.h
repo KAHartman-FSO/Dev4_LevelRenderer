@@ -15,12 +15,31 @@ class Renderer
 	GW::GRAPHICS::GVulkanSurface vlk;
 	GW::CORE::GEventReceiver shutdown;
 
-	// what we need at a minimum to draw a triangle
+	// Device, Buffers and Memory
 	VkDevice device = nullptr;
+	//		vertex
 	VkBuffer vertexHandle = nullptr;
 	VkDeviceMemory vertexData = nullptr;
+	//		index data
 	VkBuffer indexHandle = nullptr;
 	VkDeviceMemory indexData = nullptr;
+	//		storage buffer data
+	std::vector<VkBuffer> storageHandles;
+	std::vector<VkDeviceMemory> storageDatas;
+
+	// Struct containing Data for Storage Buffer
+#define MAX_SUBMESH_PER_DRAW 1024
+	struct SHADER_MODEL_DATA
+	{
+		GW::MATH::GVECTORF sunDirection, sunColor, sunAmbient, camPosition;
+		GW::MATH::GMATRIXF view_matrix, projection_matrix;
+
+		GW::MATH::GMATRIXF world_matrices[MAX_SUBMESH_PER_DRAW];	// World Matrix for Particular Sub-Mesh
+		OBJ_ATTRIBUTES materials[MAX_SUBMESH_PER_DRAW];						// Color / Texture of Surface for Particular Sub-Mesh
+	};
+	SHADER_MODEL_DATA SceneData;
+
+	//	Shader Modules
 	VkShaderModule vertexShader = nullptr;
 	VkShaderModule pixelShader = nullptr;
 
@@ -33,29 +52,13 @@ class Renderer
 	GW::MATH::GMATRIXF world;
 	GW::MATH::GMATRIXF view;
 	GW::MATH::GMATRIXF projection;
-
-	// Buffer and Memory allocated for Storage Buffer
-	std::vector<VkBuffer> storageHandles;
-	std::vector<VkDeviceMemory> storageDatas;
-
-	// Descriptor
+	
+	// Descriptors
 	VkDescriptorSetLayout desc_set_layout = nullptr;	// "DESCRIPTORS ARE COMING!"
 	VkDescriptorPool desc_pool = nullptr;					// How Vulkan Efficently Reserves Space for Descriptor Sets
 	std::vector<VkDescriptorSet> descriptor_sets;
 
 	unsigned int frameCount = 0;
-
-	// Shader Model Data Struct to send to shader
-#define MAX_SUBMESH_PER_DRAW 1024
-	struct SHADER_MODEL_DATA
-	{
-		GW::MATH::GVECTORF sunDirection, sunColor, sunAmbient, camPosition;
-		GW::MATH::GMATRIXF view_matrix, projection_matrix;
-	
-		GW::MATH::GMATRIXF world_matrices[MAX_SUBMESH_PER_DRAW];	// World Matrix for Particular Sub-Mesh
-		OBJ_ATTRIBUTES materials[MAX_SUBMESH_PER_DRAW];						// Color / Texture of Surface for Particular Sub-Mesh
-	};
-	SHADER_MODEL_DATA SceneData;
 
 	// Load a shader file as a string of characters.
 	std::string ShaderAsString(const char* shaderFilePath) {
@@ -76,7 +79,6 @@ class Renderer
 	GW::INPUT::GInput keyboard_input;
 	float FOV = 60;
 	float mouse_posX, mouse_posY;
-
 
 public:
 	void UpdateCamera()
@@ -173,10 +175,6 @@ public:
 		translationData.y = 0;
 		translationData.z = zChange;
 		MatrixMath.TranslateLocalF(temp_view_matrix, translationData, temp_view_matrix); // x and z translation	
-
-		// Set camera_vm to newly adjusted, inversed matrix
-		std::cout << "Camera Position: " << temp_view_matrix.row4.x << ", " <<
-			temp_view_matrix.row4.y << ", " << temp_view_matrix.row4.z << std::endl;
 
 		MatrixMath.InverseF(temp_view_matrix, view);
 	}
