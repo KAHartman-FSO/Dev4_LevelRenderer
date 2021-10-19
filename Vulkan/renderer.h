@@ -96,8 +96,8 @@ public:
 		MatrixMath.InverseF(view, temp_view_matrix); // Store a copy of the inversed camera_wm
 
 		// Adjust Matrix based on User Input
-		const float camera_speed = 0.3f;
-		const float sensitivity = 1.0f;
+		const float camera_speed = 0.4f;
+		const float sensitivity = 2.0f;
 		GW::MATH::GVECTORF translationData;
 		translationData.x = 0;
 		translationData.y = 0;
@@ -184,6 +184,7 @@ public:
 	Renderer(GW::SYSTEM::GWindow _win, GW::GRAPHICS::GVulkanSurface _vlk)
 	{
 		// Setting Up Level Data
+		data.SetLevel("../../Levels/GameLevel.txt");
 		data.LoadLevel();
 		
 		// Load Shader Sources
@@ -197,6 +198,7 @@ public:
 		win.GetClientHeight(height);
 	
 		keyboard_input.Create(_win);
+		keyboard_input.GetMousePosition(mouse_posX, mouse_posY);
 		MatrixMath.Create();
 		// ***** Creating Shader Data to Be Passed to Shaders ***** //
 		// World Matrix
