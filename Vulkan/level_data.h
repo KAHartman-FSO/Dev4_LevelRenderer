@@ -22,7 +22,6 @@ class LevelData {
 	vector<unsigned> m_indices;
 	vector<int> mesh_index_offsets;
 
-
 	// Other Stuff
 	int num_mesh = 0;
 	H2B::Parser classParser;
@@ -89,6 +88,8 @@ public:
 		string filePath;
 		int index = 0;
 		int curr_v_offset = 0;
+		int curr_i_offset = 0;
+		int curr_m_offset = 0;
 		bool loop = true;
 		while (loop)
 		{
@@ -110,6 +111,13 @@ public:
 				curr_v_offset += classParser.vertexCount;								// Update curr_offset to match where we are in the m_vertices array (vector)
 
 				// Index Data
+				m_indices.resize(classParser.indexCount + curr_i_offset);
+				for (int i = 0; i < classParser.indexCount; i++)
+				{
+					m_indices[i + curr_i_offset] = classParser.indices[i];
+				}
+				mesh_index_offsets[index] = curr_i_offset;
+				curr_i_offset += classParser.indexCount;
 
 				++index;
 			}
