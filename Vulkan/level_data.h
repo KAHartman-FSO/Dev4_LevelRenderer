@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include "h2bParser.h"
 using namespace std;
 #define MAX_SUBMESH_PER_DRAW 1024
 
@@ -10,8 +11,21 @@ class LevelData {
 	string level_file;
 	fstream myFile;
 	GW::MATH::GMatrix MatrixMath;
+
+	// Information we will need the Graphics Card to have eventually
 	GW::MATH::GMATRIXF worldMatrices[MAX_SUBMESH_PER_DRAW];
 	string meshNames[MAX_SUBMESH_PER_DRAW];
+
+	vector<H2B::VERTEX> m_vertices;
+	vector<int> mesh_vert_offsets;
+
+	vector<unsigned> m_indices;
+	vector<int> mesh_index_offsets;
+
+
+	// Other Stuff
+	int num_mesh = 0;
+	H2B::Parser classParser;
 
 public:
 	void SetLevel(string level_file_path)
@@ -63,9 +77,51 @@ public:
 				}
 			}
 			myFile.close();
+			num_mesh = index;
 		}
 		else
 			cout << "Level Was Not Found" << endl;
+
+		mesh_vert_offsets.resize(num_mesh);
+		mesh_index_offsets.resize(num_mesh);
+
+		// Load .mtl / .obj info with .h2b parser
+		string filePath;
+		int index = 0;
+		int curr_v_offset = 0;
+		bool loop = true;
+		while (loop)
+		{
+			filePath = "../../Assets/";
+			filePath.append(meshNames[index]);
+			filePath.append(".h2b");
+			if (classParser.Parse(filePath.c_str()))
+			{
+				cout << filePath << " successfully parsed." << endl;
+
+				// Store Data in Class / Append to same array
+				//	Vertex Data
+				m_vertices.resize(classParser.vertexCount + curr_v_offset);	// Make room to store vertices
+				for (int i = 0; i < classParser.vertexCount; i++)						// Loop to move each vertex from .h2b to class m_vertices
+				{
+					m_vertices[i + curr_v_offset] = classParser.vertices[i];			// Store parsedVerts in m_vertices in proper position!!
+				}
+				mesh_vert_offsets[index] = curr_v_offset;								// Add offset to mesh_vert_offsets
+				curr_v_offset += classParser.vertexCount;								// Update curr_offset to match where we are in the m_vertices array (vector)
+
+				// Index Data
+
+				++index;
+			}
+			else
+			{
+				cout << "Could not parse " << filePath << endl;
+				loop = false;
+			}
+		}
+	
+		int x = 0;
+		
 	}
 	LevelData()
 	{

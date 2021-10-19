@@ -11,7 +11,7 @@
 // Creation, Rendering & Cleanup
 class Renderer
 {
-	LevelData data;
+	LevelData level_data;
 
 	// proxy handles
 	GW::SYSTEM::GWindow win;
@@ -184,8 +184,8 @@ public:
 	Renderer(GW::SYSTEM::GWindow _win, GW::GRAPHICS::GVulkanSurface _vlk)
 	{
 		// Setting Up Level Data
-		data.SetLevel("../../Levels/GameLevel.txt");
-		data.LoadLevel();
+		//level_data.SetLevel("../../Levels/GameLevel.txt");
+		level_data.LoadLevel();
 		
 		// Load Shader Sources
 		vertexShaderSource = ShaderAsString("../Shaders/VertexShader.hlsl");
