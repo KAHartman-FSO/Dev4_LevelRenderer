@@ -11,7 +11,7 @@
 // Creation, Rendering & Cleanup
 class Renderer
 {
-	LevelData level_data;
+	LEVEL::LevelData level_data;
 
 	// proxy handles
 	GW::SYSTEM::GWindow win;
