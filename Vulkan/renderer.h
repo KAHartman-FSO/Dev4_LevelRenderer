@@ -4,12 +4,15 @@
 #include <vector>
 #include <chrono>
 #include <string>
+#include "level_data.h"
 #ifdef _WIN32 // must use MT platform DLL libraries on windows
 	#pragma comment(lib, "shaderc_combined.lib") 
 #endif
 // Creation, Rendering & Cleanup
 class Renderer
 {
+	LevelData data;
+
 	// proxy handles
 	GW::SYSTEM::GWindow win;
 	GW::GRAPHICS::GVulkanSurface vlk;
@@ -94,7 +97,7 @@ public:
 
 		// Adjust Matrix based on User Input
 		const float camera_speed = 0.3f;
-		const float sensitivity = 0.15f;
+		const float sensitivity = 1.0f;
 		GW::MATH::GVECTORF translationData;
 		translationData.x = 0;
 		translationData.y = 0;
@@ -192,6 +195,7 @@ public:
 	
 		keyboard_input.Create(_win);
 		MatrixMath.Create();
+		// ***** Creating Shader Data to Be Passed to Shaders ***** //
 		// World Matrix
 		MatrixMath.IdentityF(world);
 		// View Matrix
@@ -309,7 +313,6 @@ public:
 			assembly_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 			assembly_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 			assembly_create_info.primitiveRestartEnable = false;
-		
 		// Vertex Input State
 		VkVertexInputBindingDescription vertex_binding_description = {};
 			vertex_binding_description.binding = 0;
@@ -398,7 +401,7 @@ public:
 			dynamic_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 			dynamic_create_info.dynamicStateCount = 2;
 			dynamic_create_info.pDynamicStates = dynamic_state;
-		
+
 		// Descriptor For Storage Buffer
 		VkDescriptorSetLayoutBinding desc_layout_binding = {};
 			desc_layout_binding.binding = 0;
