@@ -183,6 +183,9 @@ public:
 	}
 	Renderer(GW::SYSTEM::GWindow _win, GW::GRAPHICS::GVulkanSurface _vlk)
 	{
+		// Setting Up Level Data
+		data.LoadLevel();
+		
 		// Load Shader Sources
 		vertexShaderSource = ShaderAsString("../Shaders/VertexShader.hlsl");
 		pixelShaderSource = ShaderAsString("../Shaders/PixelShader.hlsl");
