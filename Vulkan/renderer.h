@@ -11,7 +11,7 @@
 // Creation, Rendering & Cleanup
 class Renderer
 {
-	LEVEL::LevelData level_data;
+	LEVEL::LevelData LEVEL;
 
 	// proxy handles
 	GW::SYSTEM::GWindow win;
@@ -185,11 +185,13 @@ public:
 	{
 		// Setting Up Level Data
 		//level_data.SetLevel("../../Levels/GameLevel.txt");
-		level_data.LoadLevel();
+		LEVEL.LoadWorldMatrixData();
+		LEVEL.H2BParse();
+		LEVEL.OneArray();
 		
 		// Load Shader Sources
-		vertexShaderSource = ShaderAsString("../Shaders/VertexShader.hlsl");
-		pixelShaderSource = ShaderAsString("../Shaders/PixelShader.hlsl");
+		vertexShaderSource = ShaderAsString("../Shaders/LevelVertexShader.hlsl");
+		pixelShaderSource = ShaderAsString("../Shaders/LevelPixelShader.hlsl");
 	
 		win = _win;
 		vlk = _vlk;
@@ -243,17 +245,17 @@ public:
 		VkPhysicalDevice physicalDevice = nullptr;
 		vlk.GetDevice((void**)&device);
 		vlk.GetPhysicalDevice((void**)&physicalDevice);
-
+		
 		// Transfer triangle data to the vertex buffer. (staging would be prefered here)
-		GvkHelper::create_buffer(physicalDevice, device, sizeof(FSLogo_vertices),
+		GvkHelper::create_buffer(physicalDevice, device, sizeof(LEVEL.access.toVertexBuffer),
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | 
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &vertexHandle, &vertexData);
-		GvkHelper::write_to_buffer(device, vertexData, FSLogo_vertices, sizeof(FSLogo_vertices));
+		GvkHelper::write_to_buffer(device, vertexData, LEVEL.access.toVertexBuffer.data(), sizeof(LEVEL.access.toVertexBuffer));
 		// Transfer FSLogo_Index Data to Index Buffer
-		GvkHelper::create_buffer(physicalDevice, device, sizeof(FSLogo_indices),
+		GvkHelper::create_buffer(physicalDevice, device, sizeof(LEVEL.access.toIndexBuffer),
 			VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &indexHandle, &indexData);
-		GvkHelper::write_to_buffer(device, indexData, FSLogo_indices, sizeof(FSLogo_indices));
+		GvkHelper::write_to_buffer(device, indexData, LEVEL.access.toIndexBuffer.data(), sizeof(LEVEL.access.toIndexBuffer));
 		// Transfer Shader_Data to StorageBuffer
 		vlk.GetSwapchainImageCount(frameCount);
 		storageDatas.resize(frameCount);
@@ -321,12 +323,12 @@ public:
 		// Vertex Input State
 		VkVertexInputBindingDescription vertex_binding_description = {};
 			vertex_binding_description.binding = 0;
-			vertex_binding_description.stride = sizeof(OBJ_VERT);
+			vertex_binding_description.stride = sizeof(H2B::VERTEX);
 			vertex_binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 		VkVertexInputAttributeDescription vertex_attribute_description[3] = {
 			{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
-			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(OBJ_VEC3) },
-			{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(OBJ_VEC3) * 2 }//uv, normal, etc....
+			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(H2B::VECTOR) },
+			{ 2, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(H2B::VECTOR) * 2 }//uv, normal, etc....
 		};
 		VkPipelineVertexInputStateCreateInfo input_vertex_info = {};
 			input_vertex_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -466,7 +468,7 @@ public:
 		// Push Constant
 		VkPushConstantRange push_constant_range = {};
 			push_constant_range.offset = 0;
-			push_constant_range.size = sizeof(unsigned int);
+			push_constant_range.size = sizeof(GW::MATH::GMATRIXF);
 			push_constant_range.stageFlags = VK_SHADER_STAGE_ALL;
 		// Descriptor pipeline layout
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
@@ -512,11 +514,8 @@ public:
 		auto clock2 = std::chrono::steady_clock::now();
 		std::chrono::duration<float> time_bt_frame = clock2 - clock1;
 		clock1 = clock2;
-		float rotation_speed = 0.3f; // per second
-		float total_rotation = rotation_speed * time_bt_frame.count();
-		MatrixMath.RotateYGlobalF(world, total_rotation, world);
-		SceneData.world_matrices[1] = world;
-		SceneData.view_matrix = view;
+
+		// Write to Storage Buffer
 		for (int i = 0; i < frameCount; i++)
 		{
 			GvkHelper::write_to_buffer(device, storageDatas[i], &SceneData, sizeof(SceneData));
@@ -547,12 +546,17 @@ public:
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
 			pipelineLayout, 0, 1, &descriptor_sets[currentBuffer], 0, nullptr);
 
-		for (unsigned int i = 0; i < FSLogo_meshcount; i++)
-		{
-			vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(unsigned int),
-				&FSLogo_meshes[i].materialIndex);
-			vkCmdDrawIndexed(commandBuffer, FSLogo_meshes[i].indexCount, 1, FSLogo_meshes[i].indexOffset, 0, 0);
-		}
+		//for (unsigned int i = 0; i < 2; i++)
+		//{
+		//	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(unsigned int),
+		//		&LEVEL.access.worldMatrices[i]);
+		//	vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[i].indexCount, 1, LEVEL.access.firstIndex[i],
+		//		0, 0);
+
+		//	//vkCmdDrawIndexed(commandBuffer, FSLogo_meshes[i].indexCount, 1, FSLogo_meshes[i].indexOffset, 0, 0);
+		//}
+		vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[0].indexCount, 1, LEVEL.access.firstIndex[0],
+			0, 0);
 	}
 	
 private:
