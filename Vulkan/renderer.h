@@ -247,15 +247,17 @@ public:
 		vlk.GetPhysicalDevice((void**)&physicalDevice);
 		
 		// Transfer triangle data to the vertex buffer. (staging would be prefered here)
-		GvkHelper::create_buffer(physicalDevice, device, sizeof(LEVEL.access.toVertexBuffer),
+		GvkHelper::create_buffer(physicalDevice, device, sizeof(H2B::VERTEX) * LEVEL.access.toVertexBuffer.size(),
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | 
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &vertexHandle, &vertexData);
-		GvkHelper::write_to_buffer(device, vertexData, LEVEL.access.toVertexBuffer.data(), sizeof(LEVEL.access.toVertexBuffer));
+		GvkHelper::write_to_buffer(device, vertexData, LEVEL.access.toVertexBuffer.data(), sizeof(H2B::VERTEX) * LEVEL.access.toVertexBuffer.size());
 		// Transfer FSLogo_Index Data to Index Buffer
-		GvkHelper::create_buffer(physicalDevice, device, sizeof(LEVEL.access.toIndexBuffer),
+		GvkHelper::create_buffer(physicalDevice, device, sizeof(unsigned int) * LEVEL.access.toIndexBuffer.size(),
 			VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &indexHandle, &indexData);
-		GvkHelper::write_to_buffer(device, indexData, LEVEL.access.toIndexBuffer.data(), sizeof(LEVEL.access.toIndexBuffer));
+		GvkHelper::write_to_buffer(device, indexData, LEVEL.access.toIndexBuffer.data(), sizeof(unsigned int) * LEVEL.access.toIndexBuffer.size());
+
+
 		// Transfer Shader_Data to StorageBuffer
 		vlk.GetSwapchainImageCount(frameCount);
 		storageDatas.resize(frameCount);
@@ -409,6 +411,7 @@ public:
 			dynamic_create_info.dynamicStateCount = 2;
 			dynamic_create_info.pDynamicStates = dynamic_state;
 
+#pragma region Storage Buffer Descriptor Stuff
 		// Descriptor For Storage Buffer
 		VkDescriptorSetLayoutBinding desc_layout_binding = {};
 			desc_layout_binding.binding = 0;
@@ -465,6 +468,8 @@ public:
 			write_desc_set.dstSet = descriptor_sets[i];
 			vkUpdateDescriptorSets(device, 1, &write_desc_set, 0, nullptr);
 		}
+#pragma endregion
+
 		// Push Constant
 		VkPushConstantRange push_constant_range = {};
 			push_constant_range.offset = 0;
@@ -542,21 +547,27 @@ public:
 		// now we can draw
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexHandle, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, indexHandle, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(commandBuffer, indexHandle, 0, VK_INDEX_TYPE_UINT32); // Look into this
+
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
 			pipelineLayout, 0, 1, &descriptor_sets[currentBuffer], 0, nullptr);
 
 		//for (unsigned int i = 0; i < 2; i++)
 		//{
-		//	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(unsigned int),
-		//		&LEVEL.access.worldMatrices[i]);
-		//	vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[i].indexCount, 1, LEVEL.access.firstIndex[i],
-		//		0, 0);
-
+		vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(unsigned int),
+			&LEVEL.access.worldMatrices[0]);
+		//	/*vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[i].indexCount, 1, LEVEL.access.firstIndex[i],
+		//		0, 0);*/
 		//	//vkCmdDrawIndexed(commandBuffer, FSLogo_meshes[i].indexCount, 1, FSLogo_meshes[i].indexOffset, 0, 0);
 		//}
-		vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[0].indexCount, 1, LEVEL.access.firstIndex[0],
-			0, 0);
+
+		for (int i = 0; i < LEVEL.access.num_mesh; i++)
+		{
+			vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[i].indexCount, 1, LEVEL.access.firstIndex[i],
+				LEVEL.access.firstVertex[i], 0);
+		}
+
+		
 	}
 	
 private:

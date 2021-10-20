@@ -48,8 +48,9 @@ namespace LEVEL {
 			vector<unsigned>			firstIndex;
 			vector<unsigned>			firstVertex;
 			vector<H2B::VERTEX>		toVertexBuffer;
-			vector<unsigned>			toIndexBuffer;
+			vector<unsigned int>		toIndexBuffer;
 			vector<PARSED_DATA> ParsedObjects;
+			int num_mesh;
 			GW::MATH::GMATRIXF	worldMatrices[MAX_SUBMESH_PER_DRAW];
 		};
 	public:
@@ -128,6 +129,8 @@ namespace LEVEL {
 				filePath.append(".h2b");
 				if (classParser.Parse(filePath.c_str()))
 				{
+					// For Each Object
+					// Copy Literally Everything From classParser to a PARSED_DATA structure
 					cout << filePath << " successfully parsed." << endl;
 
 					ParsedObjects[index].vertices = classParser.vertices;
@@ -189,60 +192,13 @@ namespace LEVEL {
 					toVertexBuffer,
 					toIndexBuffer,
 					ParsedObjects,
+					num_mesh
 				};
 				for (int i = 0; i < MAX_SUBMESH_PER_DRAW; i++)
 				{
 					access.worldMatrices[i] = worldMatrices[i];
 				}
 			}
-			
-
-		//	// Store Data in Class / Append to same array
-		//			//	Vertex Data
-		//	mesh_vertex_counts[index] = classParser.vertexCount;					// Store how many vertices there are
-		//	m_vertices.resize(classParser.vertexCount + curr_vertice_offset);	// Make room to store vertices
-		//	for (int i = 0; i < classParser.vertexCount; i++)								// Loop to move each vertex from .h2b to class m_vertices
-		//	{
-		//		m_vertices[i + curr_vertice_offset] = classParser.vertices[i];		// Store parsedVerts in m_vertices in proper position!!
-		//	}
-		//	mesh_vert_offsets[index] = curr_vertice_offset;								// Add offset to mesh_vert_offsets
-		//	curr_vertice_offset += classParser.vertexCount;								// Update curr_offset to match where we are in the m_vertices array (vector)
-
-		//	// Index Data
-		//	mesh_index_counts[index] = classParser.indexCount;
-		//	m_indices.resize(classParser.indexCount + curr_indice_offset);		// Repeat for Indices, Materials, and Meshes
-		//	for (int i = 0; i < classParser.indexCount; i++)
-		//	{
-		//		m_indices[i + curr_indice_offset] = classParser.indices[i];
-		//	}
-		//	mesh_index_offsets[index] = curr_indice_offset;
-		//	curr_indice_offset += classParser.indexCount;
-
-		//	// Material Data
-		//	mesh_material_counts[index] = classParser.materialCount;
-		//	for (int i = 0; i < classParser.materialCount; i++)
-		//	{
-		//		m_materials[i + curr_material_offset] = classParser.materials[i].attrib;
-		//	}
-		//	mesh_material_offsets[index] = curr_material_offset;
-		//	curr_material_offset += classParser.materialCount;
-
-		//	// Mesh Data
-		//	mesh_submesh_counts[index] = classParser.meshCount;
-		//	m_submeshes.resize(classParser.meshCount + curr_mesh_offset);
-		//	for (int i = 0; i < classParser.meshCount; i++)
-		//	{
-		//		m_submeshes[i + curr_mesh_offset] = classParser.meshes[i];
-		//	}
-		//	mesh_material_offsets[index] = curr_mesh_offset;
-		//	curr_mesh_offset += classParser.meshCount;
-		//	++index;
-		//}
-		//		else
-		//		{
-		//		cout << "Could not parse " << filePath << endl;
-		//		loop = false;
-		//		}
 		}
 	};
 }

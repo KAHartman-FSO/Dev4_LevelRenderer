@@ -12,6 +12,11 @@ struct Vertex_Input
 	float3 uvw : TEXCOORD;
 	float3 nrm : NORMAL;
 };
+[[vk::push_constant]]
+cbuffer MATRIX_DATA {
+	float4x4 wMatrix;
+	float4x4 vp_Matrixj;
+};
 Vertex_Output main(Vertex_Input INPUT)
 {
 	Vertex_Output OUTPUT;

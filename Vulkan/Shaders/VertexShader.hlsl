@@ -44,13 +44,13 @@ StructuredBuffer<SHADER_MODEL_DATA> SCENE_DATA;
 Vertex_Output main(Vertex_Input INPUT)
 {
 	Vertex_Output OUTPUT;
-	OUTPUT.posH = float4(INPUT.pos, 1);																	// Convert Input Position into a float4 for matrix mult
+	OUTPUT.posH = float4(INPUT.pos, 1);																		// Convert Input Position into a float4 for matrix mult
 	float4 temp_nrm = mul(float4(INPUT.nrm, 1), SCENE_DATA[0].wMatrix[mesh_ID]);	// Create Temp float4 to get get the world space normal
-	OUTPUT.nrmW = temp_nrm.xyz;																				// Store world space normal in float3 OUTPUT variable
-	OUTPUT.posH = mul(OUTPUT.posH, SCENE_DATA[0].wMatrix[mesh_ID]);			// Get world Position by multiplying world matrix
-	OUTPUT.posW = OUTPUT.posH.xyz;																		// Store World Position for Lighting in Float3 OUTPUT var
-	OUTPUT.posH = mul(OUTPUT.posH, SCENE_DATA[0].vMatrix);								// View Matrix Multiplication
-	OUTPUT.posH = mul(OUTPUT.posH, SCENE_DATA[0].pMatrix);								// Proj Matrix Multiplication
+	OUTPUT.nrmW = temp_nrm.xyz;																					// Store world space normal in float3 OUTPUT variable
+	OUTPUT.posH = mul(OUTPUT.posH, SCENE_DATA[0].wMatrix[mesh_ID]);				// Get world Position by multiplying world matrix
+	OUTPUT.posW = OUTPUT.posH.xyz;																			// Store World Position for Lighting in Float3 OUTPUT var
+	OUTPUT.posH = mul(OUTPUT.posH, SCENE_DATA[0].vMatrix);									// View Matrix Multiplication
+	OUTPUT.posH = mul(OUTPUT.posH, SCENE_DATA[0].pMatrix);									// Proj Matrix Multiplication
 
 	return OUTPUT;
 }
