@@ -7,7 +7,6 @@
 using namespace std;
 #define MAX_SUBMESH_PER_DRAW 1024
 namespace LEVEL {
-
 	class LevelData {
 		string level_file;
 		H2B::Parser classParser;
@@ -34,7 +33,7 @@ namespace LEVEL {
 
 		// What I'll Need for Storage Buffer
 		GW::MATH::GMATRIXF worldMatrices[MAX_SUBMESH_PER_DRAW];
-		vector<H2B::ATTRIBUTES> materials[MAX_SUBMESH_PER_DRAW];
+		vector<H2B::ATTRIBUTES> materials;
 
 		// What I'll Need for Drawing
 		vector<unsigned> firstIndex;
@@ -47,12 +46,15 @@ namespace LEVEL {
 		{
 			vector<unsigned>			firstIndex;
 			vector<unsigned>			firstVertex;
+			vector<unsigned>			firstMaterial;
 			vector<H2B::VERTEX>		toVertexBuffer;
 			vector<unsigned int>		toIndexBuffer;
 			vector<PARSED_DATA> ParsedObjects;
 			int num_mesh;
 			GW::MATH::GMATRIXF	worldMatrices[MAX_SUBMESH_PER_DRAW];
+			H2B::ATTRIBUTES				materials[MAX_SUBMESH_PER_DRAW];
 		};
+
 	public:
 		Care_Package access;
 		LevelData()
@@ -183,21 +185,38 @@ namespace LEVEL {
 				}
 				firstIndex.push_back(current_offset);
 				current_offset += ParsedObjects[i].indexCount;
-
-				// Populate Access
-				access =
+			}
+			// Do the Same for Materials Array
+			current_offset = 0;
+			for (int i = 0; i < ParsedObjects.size(); i++)
+			{
+				materials.resize(ParsedObjects[i].materialCount + materials.size());
+				for (int j = 0; j < ParsedObjects[i].materialCount; j++)
 				{
-					firstIndex,
-					firstVertex,
-					toVertexBuffer,
-					toIndexBuffer,
-					ParsedObjects,
-					num_mesh
-				};
-				for (int i = 0; i < MAX_SUBMESH_PER_DRAW; i++)
-				{
-					access.worldMatrices[i] = worldMatrices[i];
+					materials[j + current_offset] = ParsedObjects[i].materials[j].attrib;
 				}
+				firstMaterial.push_back(current_offset);
+				current_offset += ParsedObjects[i].materialCount;
+			}
+
+			// Populate Access
+			access =
+			{
+				firstIndex,
+				firstVertex,
+				firstMaterial,
+				toVertexBuffer,
+				toIndexBuffer,
+				ParsedObjects,
+				num_mesh
+			};
+			for (int i = 0; i < MAX_SUBMESH_PER_DRAW; i++)
+			{
+				access.worldMatrices[i] = worldMatrices[i];
+			}
+			for (int i = 0; i < materials.size(); i++)
+			{
+				access.materials[i] = materials[i];
 			}
 		}
 	};

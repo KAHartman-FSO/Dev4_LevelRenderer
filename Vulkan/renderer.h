@@ -42,6 +42,16 @@ class Renderer
 	};
 	SHADER_MODEL_DATA SceneData;
 
+	struct LEVEL_MODEL_DATA
+	{
+		GW::MATH::GVECTORF sunDirection, sunColor, sunAmbient, camPosition;
+		GW::MATH::GMATRIXF view_matrix, projection_matrix;
+
+		GW::MATH::GMATRIXF world_matrices[MAX_SUBMESH_PER_DRAW];	// World Matrix for Particular Sub-Mesh
+		H2B::ATTRIBUTES materials[MAX_SUBMESH_PER_DRAW];						// Color / Texture of Surface for Particular Sub-Mesh
+	};
+	LEVEL_MODEL_DATA LevelData;
+
 	//	Shader Modules
 	VkShaderModule vertexShader = nullptr;
 	VkShaderModule pixelShader = nullptr;
@@ -84,6 +94,7 @@ class Renderer
 	float mouse_posX, mouse_posY;
 
 public:
+
 	void UpdateCamera()
 	{
 		static auto clock1 = std::chrono::steady_clock::now();
@@ -96,7 +107,7 @@ public:
 		MatrixMath.InverseF(view, temp_view_matrix); // Store a copy of the inversed camera_wm
 
 		// Adjust Matrix based on User Input
-		const float camera_speed = 0.4f;
+		const float camera_speed = 2.0f;
 		const float sensitivity = 2.0f;
 		GW::MATH::GVECTORF translationData;
 		translationData.x = 0;
@@ -181,6 +192,7 @@ public:
 
 		MatrixMath.InverseF(temp_view_matrix, view);
 	}
+
 	Renderer(GW::SYSTEM::GWindow _win, GW::GRAPHICS::GVulkanSurface _vlk)
 	{
 		// Setting Up Level Data
@@ -226,6 +238,8 @@ public:
 		GW::MATH::GVECTORF lightDir = { -1.0f, -1.0f, 2.0f, 0 };
 		GW::MATH::GVECTORF lightColor = { 0.9f, 0.9f, 1.0f, 1.0f };
 		GW::MATH::GVECTORF lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
+
+#pragma region FS_LOGO STUFF
 		// Create a Structure Filled with all Shader Data needed
 		SceneData.sunDirection = lightDir;
 		SceneData.sunColor = lightColor;
@@ -239,7 +253,19 @@ public:
 		}
 		SceneData.materials[0] = FSLogo_materials[0].attrib;
 		SceneData.materials[1] = FSLogo_materials[1].attrib;
-	
+#pragma endregion
+
+		LevelData.sunDirection = lightDir;
+		LevelData.sunColor = lightColor;
+		LevelData.sunAmbient = lightAmbient;
+		LevelData.camPosition = eye;
+		LevelData.view_matrix = view;
+		LevelData.projection_matrix = projection;
+		for (int i = 0; i < MAX_SUBMESH_PER_DRAW; i++)
+		{
+			LevelData.world_matrices[i] = LEVEL.access.worldMatrices[i];
+			LevelData.materials[i] = LEVEL.access.materials[i];
+		}
 		/***************** GEOMETRY INTIALIZATION ******************/
 		// Grab the device & physical device so we can allocate some stuff
 		VkPhysicalDevice physicalDevice = nullptr;
@@ -263,12 +289,13 @@ public:
 		storageDatas.resize(frameCount);
 		storageHandles.resize(frameCount);
 		descriptor_sets.resize(frameCount);
+
 		for (int i = 0; i < frameCount; i++)
 		{
-			GvkHelper::create_buffer(physicalDevice, device, sizeof(SceneData),
+			GvkHelper::create_buffer(physicalDevice, device, sizeof(LevelData),
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &storageHandles[i], &storageDatas[i]);
-			GvkHelper::write_to_buffer(device, storageDatas[i], &SceneData, sizeof(SceneData));
+			GvkHelper::write_to_buffer(device, storageDatas[i], &LevelData, sizeof(LevelData));
 		}
 
 		/***************** SHADER INTIALIZATION ******************/
@@ -473,7 +500,7 @@ public:
 		// Push Constant
 		VkPushConstantRange push_constant_range = {};
 			push_constant_range.offset = 0;
-			push_constant_range.size = sizeof(GW::MATH::GMATRIXF) * 2;
+			push_constant_range.size = sizeof(unsigned int) * 2;
 			push_constant_range.stageFlags = VK_SHADER_STAGE_ALL;
 		// Descriptor pipeline layout
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
@@ -520,10 +547,11 @@ public:
 		std::chrono::duration<float> time_bt_frame = clock2 - clock1;
 		clock1 = clock2;
 
+		LevelData.view_matrix = view;
 		// Write to Storage Buffer
 		for (int i = 0; i < frameCount; i++)
 		{
-			GvkHelper::write_to_buffer(device, storageDatas[i], &SceneData, sizeof(SceneData));
+			GvkHelper::write_to_buffer(device, storageDatas[i], &LevelData, sizeof(LevelData));
 		}
 
 		// grab the current Vulkan commandBuffer
@@ -560,26 +588,30 @@ public:
 		//		0, 0);*/
 		//	//vkCmdDrawIndexed(commandBuffer, FSLogo_meshes[i].indexCount, 1, FSLogo_meshes[i].indexOffset, 0, 0);
 		//}
-		struct Matrices
+		struct CONST_BUFF_DATA
 		{
-			GW::MATH::GMATRIXF wMatrix;
-			GW::MATH::GMATRIXF vpMatrix;
+			float meshID, materialID;
 		};
-		Matrices toPushConst;
-
-		MatrixMath.MultiplyMatrixF(view, projection, toPushConst.vpMatrix);
+		CONST_BUFF_DATA constBuffer;
 		
 
 		for (int i = 0; i < LEVEL.access.num_mesh; i++)
 		{
-			toPushConst.wMatrix = LEVEL.access.worldMatrices[i];
-			vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(Matrices), &toPushConst);
+			constBuffer.meshID = i;
+			for (int j = 0; j < LEVEL.access.ParsedObjects[i].meshCount; j++)
+			{
+				H2B::MESH submesh = LEVEL.access.ParsedObjects[i].meshes[j];
+				constBuffer.materialID = submesh.materialIndex + LEVEL.access.firstMaterial[i];
 
-			vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[i].indexCount, 1, LEVEL.access.firstIndex[i],
-				LEVEL.access.firstVertex[i], 0);
+				vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(CONST_BUFF_DATA), &constBuffer);
+
+				unsigned int first_Index = submesh.drawInfo.indexOffset + LEVEL.access.firstIndex[i];
+				vkCmdDrawIndexed(commandBuffer, submesh.drawInfo.indexCount, 1, first_Index, LEVEL.access.firstVertex[i], 0);
+
+				/*vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[i].indexCount, 1, LEVEL.access.firstIndex[i],
+					LEVEL.access.firstVertex[i], 0);*/
+			}
 		}
-
-		
 	}
 	
 private:
