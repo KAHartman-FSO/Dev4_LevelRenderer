@@ -15,12 +15,14 @@ struct Vertex_Input
 [[vk::push_constant]]
 cbuffer MATRIX_DATA {
 	float4x4 wMatrix;
-	float4x4 vp_Matrixj;
+	float4x4 vp_Matrix;
 };
 Vertex_Output main(Vertex_Input INPUT)
 {
 	Vertex_Output OUTPUT;
 	OUTPUT.posH = float4(INPUT.pos, 1);
+	OUTPUT.posH = mul(OUTPUT.posH, wMatrix);
+	OUTPUT.posH = mul(OUTPUT.posH, vp_Matrix);
 	OUTPUT.nrmW = INPUT.nrm;
 
 	return OUTPUT;

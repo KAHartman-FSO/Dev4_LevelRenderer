@@ -473,7 +473,7 @@ public:
 		// Push Constant
 		VkPushConstantRange push_constant_range = {};
 			push_constant_range.offset = 0;
-			push_constant_range.size = sizeof(GW::MATH::GMATRIXF);
+			push_constant_range.size = sizeof(GW::MATH::GMATRIXF) * 2;
 			push_constant_range.stageFlags = VK_SHADER_STAGE_ALL;
 		// Descriptor pipeline layout
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info = {};
@@ -554,15 +554,27 @@ public:
 
 		//for (unsigned int i = 0; i < 2; i++)
 		//{
-		vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(unsigned int),
-			&LEVEL.access.worldMatrices[0]);
+		/*vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(unsigned int),
+			&LEVEL.access.worldMatrices[0]);*/
 		//	/*vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[i].indexCount, 1, LEVEL.access.firstIndex[i],
 		//		0, 0);*/
 		//	//vkCmdDrawIndexed(commandBuffer, FSLogo_meshes[i].indexCount, 1, FSLogo_meshes[i].indexOffset, 0, 0);
 		//}
+		struct Matrices
+		{
+			GW::MATH::GMATRIXF wMatrix;
+			GW::MATH::GMATRIXF vpMatrix;
+		};
+		Matrices toPushConst;
+
+		MatrixMath.MultiplyMatrixF(view, projection, toPushConst.vpMatrix);
+		
 
 		for (int i = 0; i < LEVEL.access.num_mesh; i++)
 		{
+			toPushConst.wMatrix = LEVEL.access.worldMatrices[i];
+			vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(Matrices), &toPushConst);
+
 			vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[i].indexCount, 1, LEVEL.access.firstIndex[i],
 				LEVEL.access.firstVertex[i], 0);
 		}
