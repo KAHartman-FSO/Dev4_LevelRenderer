@@ -32,13 +32,18 @@ class Renderer
 
 	// Struct containing Data for Storage Buffer
 #define MAX_SUBMESH_PER_DRAW 1024
+#define MAX_LIGHTS_PER_DRAW 16
 	struct LEVEL_MODEL_DATA
 	{
 		GW::MATH::GVECTORF sunDirection, sunColor, sunAmbient, camPosition;
 		GW::MATH::GMATRIXF view_matrix, projection_matrix;
 
+		GW::MATH::GVECTORF pointLightPositions[MAX_LIGHTS_PER_DRAW];
+		GW::MATH::GVECTORF pointLightColor;
+
 		GW::MATH::GMATRIXF world_matrices[MAX_SUBMESH_PER_DRAW];	// World Matrix for Particular Sub-Mesh
 		H2B::ATTRIBUTES materials[MAX_SUBMESH_PER_DRAW];						// Color / Texture of Surface for Particular Sub-Mesh
+		float num_lights;
 	};
 	LEVEL_MODEL_DATA LevelData;
 
@@ -234,6 +239,7 @@ public:
 		GW::MATH::GVECTORF lightDir = { -2.0f, -2.0f, 2.0f, 0 };
 		GW::MATH::GVECTORF lightColor = { 0.9f, 0.9f, 1.0f, 1.0f };
 		GW::MATH::GVECTORF lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
+		GW::MATH::GVECTORF pointLightColor = { 1.0f, 0.6f, 0.0f, 1.0f };
 
 		LevelData.sunDirection = lightDir;
 		LevelData.sunColor = lightColor;
@@ -246,6 +252,13 @@ public:
 			LevelData.world_matrices[i] = LEVEL.access.worldMatrices[i];
 			LevelData.materials[i] = LEVEL.access.materials[i];
 		}
+		for (int i = 0; i < MAX_LIGHTS_PER_DRAW; i++)
+		{
+			LevelData.pointLightPositions[i] = LEVEL.access.FirePointLightPositions[i];
+			LevelData.pointLightPositions[i].y += 1;
+		}
+		LevelData.pointLightColor = pointLightColor;
+		LevelData.num_lights = LEVEL.access.FirePointLightPositions.size();
 		/***************** GEOMETRY INTIALIZATION ******************/
 		// Grab the device & physical device so we can allocate some stuff
 		VkPhysicalDevice physicalDevice = nullptr;

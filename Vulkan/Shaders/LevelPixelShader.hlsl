@@ -20,8 +20,11 @@ struct LEVEL_MODEL_DATA
 	float4 cameraPos;
 	float4x4 vMatrix;
 	float4x4 pMatrix;
+	float4 pointLightPositions[16];
+	float4 pointLightColor;
 	float4x4 wMatrix[1024];
 	OBJ_ATTR material[1024];
+	float numLights;
 };
 [[vk::push_constant]]
 cbuffer MATRIX_DATA {
@@ -55,7 +58,20 @@ float4 main(float4 posH : SV_POSITION, float3 nrmW : NORMAL, float3 posW : WORLD
 	intensity = max(intensity, 0);
 
 	float4 spec_light = SCENE_DATA[0].lightColor * float4(SCENE_DATA[0].material[materialID].Ks, 1) * intensity;
+
+	float4 point_lights = float4(0,0,0,0);
+	// Point Lights
+	for (float i = 0; i < SCENE_DATA[0].numLights; i++)
+	{
+		// Point Light Calculations
+		float4 p_LightDir = normalize(SCENE_DATA[0].pointLightPositions[i] - float4(posW, 1));
+		float4 p_LightRatio = saturate(dot(p_LightDir, float4(nrmW, 1)));
+
+		// Range Attenuation
+		float Attenuation = 1 - saturate(length(SCENE_DATA[0].pointLightPositions[i] - float4(posW, 1)) / 5);
+		point_lights = point_lights + (p_LightRatio * SCENE_DATA[0].pointLightColor * Attenuation);
+	}
 	
-	OUTPUT = saturate(dir_light + ambient_light + spec_light);
+	OUTPUT = saturate(dir_light + ambient_light + spec_light + point_lights);
 	return OUTPUT;
 }

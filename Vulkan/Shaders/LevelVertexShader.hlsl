@@ -21,8 +21,11 @@ struct LEVEL_MODEL_DATA
 	float4 cameraPos;
 	float4x4 vMatrix;
 	float4x4 pMatrix;
+	float4 pointLightPositions[16];
+	float4 pointLightColor;
 	float4x4 wMatrix[1024];
 	OBJ_ATTR material[1024];
+	float numLights;
 };
 struct Vertex_Output
 {

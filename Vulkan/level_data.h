@@ -27,6 +27,8 @@ namespace LEVEL {
 
 		vector<string> meshNames;
 
+		vector<GW::MATH::GVECTORF> FirePointLightPositions;
+
 		// What I'll for Vertex and Index Buffers
 		vector<H2B::VERTEX>		toVertexBuffer;
 		vector<unsigned>			toIndexBuffer;
@@ -50,6 +52,7 @@ namespace LEVEL {
 			vector<H2B::VERTEX>		toVertexBuffer;
 			vector<unsigned int>		toIndexBuffer;
 			vector<PARSED_DATA> ParsedObjects;
+			vector<GW::MATH::GVECTORF> FirePointLightPositions;
 			int num_mesh;
 			GW::MATH::GMATRIXF	worldMatrices[MAX_SUBMESH_PER_DRAW];
 			H2B::ATTRIBUTES				materials[MAX_SUBMESH_PER_DRAW];
@@ -107,6 +110,10 @@ namespace LEVEL {
 						worldMatrices[index].row3 = matrix_rows[2];
 						worldMatrices[index].row4 = matrix_rows[3];
 
+						if (meshNames[index] == "WoodFire")
+						{
+							FirePointLightPositions.push_back(worldMatrices[index].row4);
+						}
 						++index;
 					}
 				}
@@ -207,6 +214,7 @@ namespace LEVEL {
 				toVertexBuffer,
 				toIndexBuffer,
 				ParsedObjects,
+				FirePointLightPositions,
 				num_mesh
 			};
 			for (int i = 0; i < MAX_SUBMESH_PER_DRAW; i++)
