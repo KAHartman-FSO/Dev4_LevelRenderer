@@ -231,7 +231,7 @@ public:
 		MatrixMath.ProjectionVulkanLHF(1.13446, aspect_ratio, 0.1f, 100, projection);
 
 		// Lighting
-		GW::MATH::GVECTORF lightDir = { -2.0f, -2.0f, 0, 0 };
+		GW::MATH::GVECTORF lightDir = { -2.0f, -2.0f, 2.0f, 0 };
 		GW::MATH::GVECTORF lightColor = { 0.9f, 0.9f, 1.0f, 1.0f };
 		GW::MATH::GVECTORF lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
 
@@ -528,7 +528,7 @@ public:
 		clock1 = clock2;
 
 		// Rotate Light Direction
-		float rotation_speed = .3;
+		float rotation_speed = .1;
 		float total_Rotation = rotation_speed * time_bt_frame.count();
 
 		GW::MATH::GMATRIXF rotationMatrix;

@@ -44,7 +44,7 @@ float4 main(float4 posH : SV_POSITION, float3 nrmW : NORMAL, float3 posW : WORLD
 	float4 dir_light = SURFACE_COLOR * dir_light_ratio * SCENE_DATA[0].lightColor;
 
 	// Ambient Lighting
-	float4 ambient_light = saturate(SCENE_DATA[0].ambientLight * SURFACE_COLOR);
+	float4 ambient_light = saturate(SCENE_DATA[0].ambientLight * SURFACE_COLOR * 0.5);
 
 	// Specular Lighting
 	float3 viewDir = normalize(SCENE_DATA[0].cameraPos - posW);
