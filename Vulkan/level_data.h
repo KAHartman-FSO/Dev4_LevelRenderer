@@ -25,7 +25,7 @@ namespace LEVEL {
 		};
 		vector<PARSED_DATA> ParsedObjects;
 
-		string meshNames[MAX_SUBMESH_PER_DRAW];
+		vector<string> meshNames;
 
 		// What I'll for Vertex and Index Buffers
 		vector<H2B::VERTEX>		toVertexBuffer;
@@ -86,7 +86,7 @@ namespace LEVEL {
 						{
 							line.resize(pos);
 						}
-						meshNames[index] = line;
+						meshNames.push_back(line);
 
 						GW::MATH::GVECTORF matrix_rows[4];
 						// Parse wMatrix Data
@@ -124,7 +124,7 @@ namespace LEVEL {
 			string filePath;
 			int index = 0;
 			bool loop = true;
-			while (loop)
+			for (int name = 0; name < meshNames.size(); name++)
 			{
 				filePath = "../../Assets/";
 				filePath.append(meshNames[index]);
@@ -154,7 +154,6 @@ namespace LEVEL {
 				else
 				{
 					cout << "Not able to parse: " << filePath << endl;
-					loop = false;
 				}
 			}
 		}

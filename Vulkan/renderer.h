@@ -196,7 +196,7 @@ public:
 	Renderer(GW::SYSTEM::GWindow _win, GW::GRAPHICS::GVulkanSurface _vlk)
 	{
 		// Setting Up Level Data
-		//level_data.SetLevel("../../Levels/GameLevel.txt");
+		LEVEL.SetLevel("../../Levels/GameLevel.txt");
 		LEVEL.LoadWorldMatrixData();
 		LEVEL.H2BParse();
 		LEVEL.OneArray();
