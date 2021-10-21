@@ -207,6 +207,7 @@ public:
 		keyboard_input.GetMousePosition(mouse_posX, mouse_posY);
 		MatrixMath.Create();
 		VectorMath.Create();
+
 		// ***** Creating Shader Data to Be Passed to Shaders ***** //
 		// World Matrix
 		MatrixMath.IdentityF(world);
@@ -230,7 +231,7 @@ public:
 		MatrixMath.ProjectionVulkanLHF(1.13446, aspect_ratio, 0.1f, 100, projection);
 
 		// Lighting
-		GW::MATH::GVECTORF lightDir = { -1.0f, -3.0f, 2.0f, 0 };
+		GW::MATH::GVECTORF lightDir = { -2.0f, -2.0f, 0, 0 };
 		GW::MATH::GVECTORF lightColor = { 0.9f, 0.9f, 1.0f, 1.0f };
 		GW::MATH::GVECTORF lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
 
@@ -526,12 +527,17 @@ public:
 		std::chrono::duration<float> time_bt_frame = clock2 - clock1;
 		clock1 = clock2;
 
-
 		// Rotate Light Direction
-		float rotation_speed = 3;
-		float total_rotation = time_bt_frame.count() * rotation_speed;
+		float rotation_speed = .3;
+		float total_Rotation = rotation_speed * time_bt_frame.count();
+
+		GW::MATH::GMATRIXF rotationMatrix;
+		MatrixMath.IdentityF(rotationMatrix);
+		MatrixMath.RotateXGlobalF(rotationMatrix, total_Rotation, rotationMatrix);
+		MatrixMath.VectorXMatrixF(rotationMatrix, LevelData.sunDirection, LevelData.sunDirection);
 
 		LevelData.view_matrix = view;
+
 		// Write to Storage Buffer
 		for (int i = 0; i < frameCount; i++)
 		{

@@ -1,8 +1,8 @@
-# Blender MTL File: 'Floor_Modular.blend'
+# Blender MTL File: 'None'
 # Material Count: 1
 
-newmtl Grey_Floor
-Ns 96.078431
+newmtl Grey_Floor.001
+Ns 96.078443
 Ka 1.000000 1.000000 1.000000
 Kd 0.059253 0.057173 0.081973
 Ks 0.500000 0.500000 0.500000

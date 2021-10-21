@@ -1,8 +1,8 @@
-# Blender MTL File: 'Wall_Modular.blend'
+# Blender MTL File: 'None'
 # Material Count: 3
 
 newmtl Wall_Dark
-Ns 96.078431
+Ns 96.078443
 Ka 1.000000 1.000000 1.000000
 Kd 0.156788 0.117427 0.076413
 Ks 0.500000 0.500000 0.500000
@@ -12,7 +12,7 @@ d 1.000000
 illum 2
 
 newmtl Wall_Highlights
-Ns 96.078431
+Ns 96.078443
 Ka 1.000000 1.000000 1.000000
 Kd 0.224805 0.176409 0.124174
 Ks 0.500000 0.500000 0.500000
@@ -22,7 +22,7 @@ d 1.000000
 illum 2
 
 newmtl Wall_Medium
-Ns 96.078431
+Ns 96.078443
 Ka 1.000000 1.000000 1.000000
 Kd 0.147573 0.100062 0.061665
 Ks 0.500000 0.500000 0.500000
