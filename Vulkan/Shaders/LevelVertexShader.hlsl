@@ -46,10 +46,15 @@ Vertex_Output main(Vertex_Input INPUT)
 {
 	Vertex_Output OUTPUT;
 	OUTPUT.posH = float4(INPUT.pos, 1);
+
+	// Get World Space Normal and Position
+	OUTPUT.nrmW = mul(INPUT.nrm, SCENE_DATA[0].wMatrix[meshID]);
+	OUTPUT.posW = mul(INPUT.pos, SCENE_DATA[0].wMatrix[meshID]);
+
+	// Get World, View, Projection Space of Pixel (Homogenous Position)
 	OUTPUT.posH = mul(OUTPUT.posH, SCENE_DATA[0].wMatrix[meshID]);
 	OUTPUT.posH = mul(OUTPUT.posH, SCENE_DATA[0].vMatrix);
 	OUTPUT.posH = mul(OUTPUT.posH, SCENE_DATA[0].pMatrix);
-	OUTPUT.nrmW = INPUT.nrm;
 
 	return OUTPUT;
 }

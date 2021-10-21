@@ -32,5 +32,30 @@ cbuffer MATRIX_DATA {
 StructuredBuffer<LEVEL_MODEL_DATA> SCENE_DATA;
 float4 main(float4 posH : SV_POSITION, float3 nrmW : NORMAL, float3 posW : WORLD) : SV_TARGET
 {
-	return float4(SCENE_DATA[0].material[materialID].Kd, 1);
+	// SetUp
+	float4 OUTPUT;
+	nrmW = normalize(nrmW);
+
+	// The Variables of  Readability
+	float4 SURFACE_COLOR = float4(SCENE_DATA[0].material[materialID].Kd, 1);
+	
+	// Directional Lighting
+	float4 dir_light_ratio = saturate(dot(-SCENE_DATA[0].lightDirection, nrmW));
+	float4 dir_light = SURFACE_COLOR * dir_light_ratio * SCENE_DATA[0].lightColor;
+
+	// Ambient Lighting
+	float4 ambient_light = saturate(SCENE_DATA[0].ambientLight * SURFACE_COLOR);
+
+	// Specular Lighting
+	float3 viewDir = normalize(SCENE_DATA[0].cameraPos - posW);
+	float3 halfVector = normalize((-SCENE_DATA[0].lightDirection) + viewDir);
+	float intensity;
+	intensity = saturate(dot(nrmW, halfVector));
+	intensity = pow(intensity, SCENE_DATA[0].material[meshID].Ns);
+	intensity = max(intensity, 0);
+
+	float4 spec_light = SCENE_DATA[0].lightColor * float4(SCENE_DATA[0].material[materialID].Ks, 1) * intensity;
+	
+	OUTPUT = saturate(dir_light + ambient_light + spec_light);
+	return OUTPUT;
 }

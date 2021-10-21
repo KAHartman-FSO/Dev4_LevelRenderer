@@ -32,16 +32,6 @@ class Renderer
 
 	// Struct containing Data for Storage Buffer
 #define MAX_SUBMESH_PER_DRAW 1024
-	struct SHADER_MODEL_DATA
-	{
-		GW::MATH::GVECTORF sunDirection, sunColor, sunAmbient, camPosition;
-		GW::MATH::GMATRIXF view_matrix, projection_matrix;
-
-		GW::MATH::GMATRIXF world_matrices[MAX_SUBMESH_PER_DRAW];	// World Matrix for Particular Sub-Mesh
-		OBJ_ATTRIBUTES materials[MAX_SUBMESH_PER_DRAW];						// Color / Texture of Surface for Particular Sub-Mesh
-	};
-	SHADER_MODEL_DATA SceneData;
-
 	struct LEVEL_MODEL_DATA
 	{
 		GW::MATH::GVECTORF sunDirection, sunColor, sunAmbient, camPosition;
@@ -62,6 +52,8 @@ class Renderer
 	
 	// WVP matrices
 	GW::MATH::GMatrix MatrixMath;
+	GW::MATH::GVector VectorMath;
+
 	GW::MATH::GMATRIXF world;
 	GW::MATH::GMATRIXF view;
 	GW::MATH::GMATRIXF projection;
@@ -214,6 +206,7 @@ public:
 		keyboard_input.Create(_win);
 		keyboard_input.GetMousePosition(mouse_posX, mouse_posY);
 		MatrixMath.Create();
+		VectorMath.Create();
 		// ***** Creating Shader Data to Be Passed to Shaders ***** //
 		// World Matrix
 		MatrixMath.IdentityF(world);
@@ -229,31 +222,17 @@ public:
 		up.x = 0; up.y = 1; up.z = 0;
 		up.w = 0;
 		MatrixMath.LookAtLHF(eye, at, up, view);
+
 		// Projection Matrix
 		MatrixMath.IdentityF(projection);
 		float aspect_ratio;
 		vlk.GetAspectRatio(aspect_ratio);
 		MatrixMath.ProjectionVulkanLHF(1.13446, aspect_ratio, 0.1f, 100, projection);
+
 		// Lighting
-		GW::MATH::GVECTORF lightDir = { -1.0f, -1.0f, 2.0f, 0 };
+		GW::MATH::GVECTORF lightDir = { -1.0f, -3.0f, 2.0f, 0 };
 		GW::MATH::GVECTORF lightColor = { 0.9f, 0.9f, 1.0f, 1.0f };
 		GW::MATH::GVECTORF lightAmbient = { 0.25f, 0.25f, 0.35f, 1.0f };
-
-#pragma region FS_LOGO STUFF
-		// Create a Structure Filled with all Shader Data needed
-		SceneData.sunDirection = lightDir;
-		SceneData.sunColor = lightColor;
-		SceneData.sunAmbient = lightAmbient;
-		SceneData.camPosition = eye;
-		SceneData.view_matrix = view;
-		SceneData.projection_matrix = projection;
-		for (int i = 0; i < MAX_SUBMESH_PER_DRAW; i++)
-		{
-			MatrixMath.IdentityF(SceneData.world_matrices[i]);
-		}
-		SceneData.materials[0] = FSLogo_materials[0].attrib;
-		SceneData.materials[1] = FSLogo_materials[1].attrib;
-#pragma endregion
 
 		LevelData.sunDirection = lightDir;
 		LevelData.sunColor = lightColor;
@@ -547,6 +526,11 @@ public:
 		std::chrono::duration<float> time_bt_frame = clock2 - clock1;
 		clock1 = clock2;
 
+
+		// Rotate Light Direction
+		float rotation_speed = 3;
+		float total_rotation = time_bt_frame.count() * rotation_speed;
+
 		LevelData.view_matrix = view;
 		// Write to Storage Buffer
 		for (int i = 0; i < frameCount; i++)
@@ -580,14 +564,6 @@ public:
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
 			pipelineLayout, 0, 1, &descriptor_sets[currentBuffer], 0, nullptr);
 
-		//for (unsigned int i = 0; i < 2; i++)
-		//{
-		/*vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(unsigned int),
-			&LEVEL.access.worldMatrices[0]);*/
-		//	/*vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[i].indexCount, 1, LEVEL.access.firstIndex[i],
-		//		0, 0);*/
-		//	//vkCmdDrawIndexed(commandBuffer, FSLogo_meshes[i].indexCount, 1, FSLogo_meshes[i].indexOffset, 0, 0);
-		//}
 		struct CONST_BUFF_DATA
 		{
 			float meshID, materialID;
@@ -607,9 +583,6 @@ public:
 
 				unsigned int first_Index = submesh.drawInfo.indexOffset + LEVEL.access.firstIndex[i];
 				vkCmdDrawIndexed(commandBuffer, submesh.drawInfo.indexCount, 1, first_Index, LEVEL.access.firstVertex[i], 0);
-
-				/*vkCmdDrawIndexed(commandBuffer, LEVEL.access.ParsedObjects[i].indexCount, 1, LEVEL.access.firstIndex[i],
-					LEVEL.access.firstVertex[i], 0);*/
 			}
 		}
 	}
