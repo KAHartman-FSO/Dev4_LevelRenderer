@@ -25,7 +25,9 @@ struct LEVEL_MODEL_DATA
 	float4 pointLightColor;
 	float4x4 wMatrix[1024];
 	OBJ_ATTR material[1024];
+	float4 randomRadius;
 	float numLights;
+	
 };
 struct Vertex_Output
 {

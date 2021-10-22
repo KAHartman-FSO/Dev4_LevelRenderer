@@ -156,6 +156,11 @@ namespace LEVEL {
 
 					ParsedObjects[index].batches = classParser.batches;
 
+					if (meshNames[index] == "WoodFire")
+					{
+						ParsedObjects[index].materials[1].attrib.Ka = { 100, 40, 0 };
+					}
+
 					++index;
 				}
 				else

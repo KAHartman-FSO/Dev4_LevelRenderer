@@ -24,6 +24,7 @@ struct LEVEL_MODEL_DATA
 	float4 pointLightColor;
 	float4x4 wMatrix[1024];
 	OBJ_ATTR material[1024];
+	float4 randomRadius;
 	float numLights;
 };
 [[vk::push_constant]]
@@ -44,12 +45,12 @@ float4 main(float4 posH : SV_POSITION, float3 nrmW : NORMAL, float3 posW : WORLD
 	
 	// Directional Lighting
 	float4 dir_light_ratio = saturate(dot(-SCENE_DATA[0].lightDirection, nrmW));
-	float4 dir_light = SURFACE_COLOR * dir_light_ratio * SCENE_DATA[0].lightColor;
+	float4 dir_light = SURFACE_COLOR * dir_light_ratio * SCENE_DATA[0].lightColor * 2;
 
 	// Ambient Lighting
-	float4 ambient_light = saturate(SCENE_DATA[0].ambientLight * SURFACE_COLOR * 0.5);
+	float4 ambient_light = saturate(SCENE_DATA[0].ambientLight * SURFACE_COLOR * float4(SCENE_DATA[0].material[materialID].Ka, 1));
 
-	// Specular Lighting
+	// Specular Lighting Directional Light
 	float3 viewDir = normalize(SCENE_DATA[0].cameraPos - posW);
 	float3 halfVector = normalize((-SCENE_DATA[0].lightDirection) + viewDir);
 	float intensity;
@@ -68,7 +69,11 @@ float4 main(float4 posH : SV_POSITION, float3 nrmW : NORMAL, float3 posW : WORLD
 		float4 p_LightRatio = saturate(dot(p_LightDir, float4(nrmW, 1)));
 
 		// Range Attenuation
-		float Attenuation = 1 - saturate(length(SCENE_DATA[0].pointLightPositions[i] - float4(posW, 1)) / 5);
+		float Attenuation = 1 - saturate(length(SCENE_DATA[0].pointLightPositions[i] - float4(posW, 1)) / SCENE_DATA[0].randomRadius.x);
+		float length = length(SCENE_DATA[0].pointLightPositions[i] - float4(posW, 1));
+		float radius_applied = saturate(length / SCENE_DATA[0].randomRadius.x);
+		Attenuation = 1 - radius_applied;
+
 		point_lights = point_lights + (p_LightRatio * SCENE_DATA[0].pointLightColor * Attenuation);
 	}
 	

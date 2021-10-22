@@ -5,6 +5,8 @@
 #include <chrono>
 #include <string>
 #include "level_data.h"
+#include <random>
+#include <time.h>
 #ifdef _WIN32 // must use MT platform DLL libraries on windows
 	#pragma comment(lib, "shaderc_combined.lib") 
 #endif
@@ -43,6 +45,7 @@ class Renderer
 
 		GW::MATH::GMATRIXF world_matrices[MAX_SUBMESH_PER_DRAW];	// World Matrix for Particular Sub-Mesh
 		H2B::ATTRIBUTES materials[MAX_SUBMESH_PER_DRAW];						// Color / Texture of Surface for Particular Sub-Mesh
+		GW::MATH::GVECTORF randomRadius;
 		float num_lights;
 	};
 	LEVEL_MODEL_DATA LevelData;
@@ -157,7 +160,7 @@ public:
 
 #pragma region Arrow Keys Rotation
 		// Rotation Test! -- With Arrow Keys
-		float rotation_speed = 10.0f;
+		float rotation_speed = 1.0f;
 
 		// Up Down
 		float UD_Rot = 0;
@@ -259,6 +262,7 @@ public:
 		}
 		LevelData.pointLightColor = pointLightColor;
 		LevelData.num_lights = LEVEL.access.FirePointLightPositions.size();
+		LevelData.randomRadius = { 5, 5, 5, 5 };
 		/***************** GEOMETRY INTIALIZATION ******************/
 		// Grab the device & physical device so we can allocate some stuff
 		VkPhysicalDevice physicalDevice = nullptr;
@@ -524,6 +528,8 @@ public:
 		vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, 
 			&pipeline_create_info, nullptr, &pipeline);
 
+		srand(time(NULL));
+
 		/***************** CLEANUP / SHUTDOWN ******************/
 		// GVulkanSurface will inform us when to release any allocated resources
 		shutdown.Create(vlk, [&]() {
@@ -544,11 +550,18 @@ public:
 		float rotation_speed = .1;
 		float total_Rotation = rotation_speed * time_bt_frame.count();
 
+		// Rotate Directional Light
 		GW::MATH::GMATRIXF rotationMatrix;
 		MatrixMath.IdentityF(rotationMatrix);
 		MatrixMath.RotateXGlobalF(rotationMatrix, total_Rotation, rotationMatrix);
 		MatrixMath.VectorXMatrixF(rotationMatrix, LevelData.sunDirection, LevelData.sunDirection);
 
+		// Randomize Attenuation
+		float ratio = rand() / static_cast<float>(RAND_MAX);
+		LevelData.randomRadius.x = (5.0f - 3.0f) * ratio + 3.0f;
+
+		
+		// Update View Matrix from Camera Data
 		LevelData.view_matrix = view;
 
 		// Write to Storage Buffer
